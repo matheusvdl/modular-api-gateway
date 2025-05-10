@@ -2,19 +2,6 @@ const http = require("http");
 
 const PORT = 8000;
 
-const options = {
-  hostname: "https://jsonplaceholder.typicode.com/users",
-  path: "",
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-  },
-};
-
-const interceptUsers = () => {
-  http.request(options, (res) => console.log("RESSS>>>", res.on('data')));
-};
-
 http
   .createServer((req, res) => {
     const { url } = req;
@@ -22,7 +9,7 @@ http
     switch (url) {
       case "/users":
         res.writeHead(200, { "Content-Type": "text/plain" });
-        interceptUsers();
+        res.end("Users");
         break;
 
       case "/products":
