@@ -3,11 +3,19 @@ const https = require("https");
 
 const PORT = 8000;
 
-const interceptUserRoute = (clientRes) => {
+const proxyApiRoute = (clientReq, clientRes) => {
+  const fullUrl = new URL(clientReq.url, `http://${clientReq.headers.host}`);
+  const apiPath = fullUrl.pathname.replace(/^\/api/, "") + fullUrl.search;
+
+  // if needed to send headers, use this code
+  // const cleanHeaders = { ...clientReq.headers };
+  // delete cleanHeaders.host;
+  // delete cleanHeaders["accept-encoding"];
   const options = {
     hostname: "jsonplaceholder.typicode.com",
-    path: "/users",
-    method: "GET",
+    path: apiPath,
+    method: clientReq.method,
+    // headers: cleanHeaders,
   };
 
   const proxyReq = https.request(options, (proxyRes) => {
@@ -38,25 +46,11 @@ http
   .createServer((req, res) => {
     const { url } = req;
 
-    switch (url) {
-      case "/users":
-        interceptUserRoute(res);
-        break;
-
-      case "/products":
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        res.end("Products");
-        break;
-
-      case "/health":
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        res.end("OK");
-        break;
-
-      default:
-        res.writeHead(404, { "Content-Type": "text/plain" });
-        res.end("Not Found");
-        break;
+    if (url.startsWith("/api")) {
+      proxyApiRoute(req, res);
+    } else {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("Not Found");
     }
   })
   .listen(PORT, () => {
