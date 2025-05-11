@@ -7,30 +7,20 @@ const proxyApiRoute = (clientReq, clientRes) => {
   const fullUrl = new URL(clientReq.url, `http://${clientReq.headers.host}`);
   const apiPath = fullUrl.pathname.replace(/^\/api/, "") + fullUrl.search;
 
-  // if needed to send headers, use this code
-  // const cleanHeaders = { ...clientReq.headers };
-  // delete cleanHeaders.host;
-  // delete cleanHeaders["accept-encoding"];
+  const cleanHeaders = { ...clientReq.headers };
+  delete cleanHeaders.host;
+  delete cleanHeaders["accept-encoding"];
+
   const options = {
     hostname: "jsonplaceholder.typicode.com",
     path: apiPath,
     method: clientReq.method,
-    // headers: cleanHeaders,
+    headers: cleanHeaders,
   };
 
   const proxyReq = https.request(options, (proxyRes) => {
-    let data = "";
-
-    proxyRes.on("data", (chunk) => {
-      data += chunk;
-    });
-
-    proxyRes.on("end", () => {
-      clientRes.writeHead(proxyRes.statusCode, {
-        "Content-Type": proxyRes.headers["content-type"] || "application/json",
-      });
-      clientRes.end(data);
-    });
+    clientRes.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(clientRes);
   });
 
   proxyReq.on("error", (e) => {
@@ -39,14 +29,12 @@ const proxyApiRoute = (clientReq, clientRes) => {
     console.error("Proxy error:", e.message);
   });
 
-  proxyReq.end();
+  clientReq.pipe(proxyReq);
 };
 
 http
   .createServer((req, res) => {
-    const { url } = req;
-
-    if (url.startsWith("/api")) {
+    if (req.url.startsWith("/api")) {
       proxyApiRoute(req, res);
     } else {
       res.writeHead(404, { "Content-Type": "text/plain" });
