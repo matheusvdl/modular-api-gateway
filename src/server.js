@@ -3,17 +3,21 @@ const { handleJsonPlaceholder } = require("./routes/jsonPlaceholder");
 
 const PORT = 8000;
 
-const server = http.createServer((req, res) => {
-  const { url } = req;
+const routes = {
+  json: handleJsonPlaceholder,
+};
 
-  if (url.startsWith("/api")) {
-    handleJsonPlaceholder(req, res);
+http.createServer((req, res) => {
+  const [ , prefix ] = req.url.split("/");
+
+  const routeHandler = routes[prefix];
+
+  if (routeHandler) {
+    routeHandler(req, res);
   } else {
     res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Not Found");
+    res.end("Service not found");
   }
-});
-
-server.listen(PORT, () => {
-  console.log(`API Gateway running at http://localhost:${PORT}`);
+}).listen(PORT, () => {
+  console.log(`API Gateway running on http://localhost:${PORT}`);
 });

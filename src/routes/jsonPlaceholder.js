@@ -1,12 +1,13 @@
 const https = require("https");
+const { URL } = require("url");
 
 function handleJsonPlaceholder(clientReq, clientRes) {
   const fullUrl = new URL(clientReq.url, `http://${clientReq.headers.host}`);
-  const apiPath = fullUrl.pathname.replace(/^\/api/, "") + fullUrl.search;
+  const path = fullUrl.pathname.replace(/^\/json/, "") + fullUrl.search;
 
   const options = {
     hostname: "jsonplaceholder.typicode.com",
-    path: apiPath,
+    path,
     method: clientReq.method,
     headers: {
       ...clientReq.headers,
@@ -16,16 +17,16 @@ function handleJsonPlaceholder(clientReq, clientRes) {
 
   const proxyReq = https.request(options, (proxyRes) => {
     clientRes.writeHead(proxyRes.statusCode, proxyRes.headers);
-    proxyRes.pipe(clientRes, { end: true });
+    proxyRes.pipe(clientRes);
   });
 
   proxyReq.on("error", (err) => {
-    console.error("Proxy error:", err.message);
-    clientRes.writeHead(502);
+    clientRes.writeHead(502, { "Content-Type": "text/plain" });
     clientRes.end("Bad Gateway");
+    console.error("Proxy error:", err.message);
   });
 
-  clientReq.pipe(proxyReq, { end: true });
+  clientReq.pipe(proxyReq);
 }
 
 module.exports = { handleJsonPlaceholder };
