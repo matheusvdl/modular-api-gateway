@@ -1,11 +1,11 @@
 module.exports = {
-  jsonplaceholder: {
+  json: {
     target: "https://jsonplaceholder.typicode.com",
   },
-  httpbin: {
+  bin: {
     target: "https://httpbin.org",
   },
-  reqres: {
+  res: {
     target: "https://reqres.in/api",
   },
 };

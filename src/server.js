@@ -12,8 +12,7 @@ const PORT = 8000;
 http
   .createServer((req, res) => {
     const [, prefix] = req.url.split("/");
-    console.log("prefix", prefix);
-    console.log("handlers", handlers);
+
     if (handlers[prefix]) {
       handlers[prefix](req, res);
     } else {
