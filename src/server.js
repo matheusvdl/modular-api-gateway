@@ -1,7 +1,7 @@
 const http = require("http");
 const services = require("./services/config");
 const createProxyHandler = require("./handler/createProxy");
-
+const rateLimiter = require("./middlewares/rateLimiter")
 const handlers = {};
 for (const prefix in services) {
   handlers[prefix] = createProxyHandler(services[prefix]);
@@ -14,7 +14,9 @@ http
     const [, prefix] = req.url.split("/");
 
     if (handlers[prefix]) {
-      handlers[prefix](req, res);
+      rateLimiter(req, res, () => {
+        handlers[prefix](req, res);
+      });
     } else {
       res.writeHead(404, { "Content-Type": "text/plain" });
       res.end("Service Not Found");
