@@ -1,8 +1,10 @@
 const { request } = require("https");
 const { URL } = require("url");
+const logRequest = require("../utils/logger");
 
 function createProxyHandler({ target }) {
   return (clientReq, clientRes) => {
+    const startTime = Date.now();
     const originalUrl = new URL(
       clientReq.url,
       `http://${clientReq.headers.host}`
@@ -20,16 +22,39 @@ function createProxyHandler({ target }) {
 
     const proxyReq = request(finalUrl, options, (proxyRes) => {
       clientRes.writeHead(proxyRes.statusCode, proxyRes.headers);
-      proxyRes.pipe(clientRes);
+      proxyRes.pipe(clientRes, { end: true });
+
+      clientRes.on("finish", () => {
+        const responseTime = Date.now() - startTime;
+
+        logRequest({
+          timestamp: new Date().toISOString(),
+          ip: clientReq.socket.remoteAddress,
+          method: clientReq.method,
+          url: clientReq.url,
+          statusCode: proxyRes.statusCode,
+          responseTime,
+        });
+      });
     });
 
     proxyReq.on("error", (err) => {
-      console.error("Proxy error:", err.message);
-      clientRes.writeHead(502, { "Content-Type": "text/plain" });
-      clientRes.end("Bad Gateway");
+      clientRes.writeHead(500);
+      clientRes.end("Proxy error");
+
+      const responseTime = Date.now() - startTime;
+      logRequest({
+        timestamp: new Date().toISOString(),
+        ip: clientReq.socket.remoteAddress,
+        method: clientReq.method,
+        url: clientReq.url,
+        statusCode: 500,
+        responseTime,
+        error: err.message,
+      });
     });
 
-    clientReq.pipe(proxyReq);
+    clientReq.pipe(proxyReq, { end: true });
   };
 }
 
