@@ -1,4 +1,4 @@
-const rateLimitMap = new Map(); // { "IP|ROUTE": { count, firstRequestTimestamp } }
+const rateLimitMap = new Map();
 
 const RATE_LIMIT = 15;
 const TIME_WINDOW = 60_000;
