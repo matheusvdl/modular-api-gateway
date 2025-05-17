@@ -1,4 +1,5 @@
 const rateLimitMap = new Map();
+const metrics = require("../metrics/metrics");
 
 const RATE_LIMIT = 15;
 const TIME_WINDOW = 60_000;
@@ -17,6 +18,7 @@ function rateLimiter(req, res, next) {
         (TIME_WINDOW - (now - entry.firstRequest)) / 1000
       );
       res.writeHead(429, { "Content-Type": "application/json" });
+      metrics.recordBlocked();
       return res.end(
         JSON.stringify({
           message: `Rate limit exceeded. Try again in ${retryAfter} seconds.`,

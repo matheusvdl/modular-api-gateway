@@ -1,8 +1,9 @@
 const { request } = require("https");
 const { URL } = require("url");
 const logRequest = require("../utils/logger");
+const metrics = require("../metrics/metrics");
 
-function createProxyHandler({ target }) {
+function createProxyHandler({ target }, prefix) {
   return (clientReq, clientRes) => {
     const startTime = Date.now();
     const originalUrl = new URL(
@@ -26,6 +27,9 @@ function createProxyHandler({ target }) {
 
       clientRes.on("finish", () => {
         const responseTime = Date.now() - startTime;
+
+        metrics.recordRequest(`/${prefix}`);
+        metrics.recordResponseTime(`/${prefix}`, responseTime);
 
         logRequest({
           timestamp: new Date().toISOString(),
