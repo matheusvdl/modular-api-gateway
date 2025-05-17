@@ -2,7 +2,7 @@ const rateLimitMap = new Map();
 const metrics = require("../metrics/metrics");
 
 const RATE_LIMIT = 15;
-const TIME_WINDOW = 60_000;
+const TIME_WINDOW = 50_000;
 
 function rateLimiter(req, res, next) {
   const ip = req.socket.remoteAddress;

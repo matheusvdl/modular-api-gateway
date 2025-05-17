@@ -14,16 +14,24 @@ function recordBlocked() {
 }
 
 function recordResponseTime(route, time) {
-  metrics.totalResponseTime[route] = (metrics.totalResponseTime[route] || 0) + time;
+  metrics.totalResponseTime[route] =
+    (metrics.totalResponseTime[route] || 0) + time;
   metrics.countResponses[route] = (metrics.countResponses[route] || 0) + 1;
 }
 
 function getMetrics() {
-  let output = "";
+  let output = `
+# HELP gateway_requests_total Total number of requests per route
+# TYPE gateway_requests_total counter
+`;
 
   for (const route in metrics.totalRequests) {
     output += `gateway_requests_total{route="${route}"} ${metrics.totalRequests[route]}\n`;
   }
+  output += `
+# HELP gateway_avg_response_time_ms Average response time per route in ms
+# TYPE gateway_avg_response_time_ms gauge
+`;
 
   for (const route in metrics.totalResponseTime) {
     const totalTime = metrics.totalResponseTime[route];
@@ -33,7 +41,10 @@ function getMetrics() {
   }
 
   output += `gateway_blocked_requests_total ${metrics.totalBlocked}\n`;
-
+  output += `
+# HELP gateway_avg_response_time_ms Average response time per route in ms
+# TYPE gateway_avg_response_time_ms gauge
+`;
   return output;
 }
 
